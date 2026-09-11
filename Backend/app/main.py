@@ -35,9 +35,12 @@ app.include_router(bot_router)
 
 # Allow the Vercel frontend (and local dev) to call this API.
 # Tighten allow_origins to your exact Vercel URL once deployed.
+configured_origins = os.environ.get("ALLOWED_ORIGINS", "").strip()
+if not configured_origins or "your-frontend.vercel.app" in configured_origins:
+    configured_origins = "*"
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.environ.get("ALLOWED_ORIGINS", "*").split(","),
+    allow_origins=[origin.strip() for origin in configured_origins.split(",") if origin.strip()],
     allow_methods=["*"],
     allow_headers=["*"],
 )
