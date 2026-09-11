@@ -89,6 +89,7 @@ function AskBox() {
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       const data = await res.json();
       setAnswer(data.answer);
+      setQuestion("");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -144,13 +145,12 @@ function App() {
     <div className="app">
       <header>
         <div className="brand-bar">
-          <div className="brand-mark" aria-label="Flour Mills of Nigeria">FMN</div>
+          <img className="brand-logo" src="/FMN.png" alt="Flour Mills of Nigeria" />
           <div className="brand-copy">
             <strong>Flour Mills of Nigeria</strong>
             <span>Supply chain intelligence</span>
           </div>
         </div>
-                <img className="brand-logo" src="/FMN.png" alt="Flour Mills of Nigeria" />
         <div className="header-row">
           <div>
             <h1>Supply Chain Stock Risk</h1>
@@ -164,7 +164,6 @@ function App() {
         <section className="summary-grid" aria-label="Risk summary">
           <div className="summary-card summary-card-alert">
             <span className="summary-label">Stockout risk</span>
-            setQuestion("");
             <strong>{stockoutCount}</strong>
             <span className="summary-note">needs attention</span>
           </div>
