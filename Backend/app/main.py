@@ -21,14 +21,17 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import anthropic
+from openai import OpenAI
+
+from app.bot.router import router as bot_router
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-MODEL_NAME = "claude-sonnet-4-6"
+MODEL_NAME = os.getenv("OPENAI_CHAT_MODEL", "openai/gpt-oss-20b:free")
 NEW_SKUS = {"SKU-2000", "SKU-2001", "SKU-2002"}
 
 app = FastAPI(title="Supply Chain Risk API")
+app.include_router(bot_router)
 
 # Allow the Vercel frontend (and local dev) to call this API.
 # Tighten allow_origins to your exact Vercel URL once deployed.
@@ -39,17 +42,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-_anthropic_client = None
+_llm_client = None
 
 
-def get_anthropic_client():
-    global _anthropic_client
-    if _anthropic_client is None:
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
+def get_llm_client() -> OpenAI:
+    global _llm_client
+    if _llm_client is None:
+        api_key = os.environ.get("API_KEY") or os.environ.get("OPENAI_API_KEY")
         if not api_key:
-            raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY not configured on server")
-        _anthropic_client = anthropic.Anthropic(api_key=api_key)
-    return _anthropic_client
+            raise HTTPException(status_code=503, detail="API_KEY or OPENAI_API_KEY not configured on server")
+        _llm_client = OpenAI(
+            api_key=api_key,
+            base_url=os.environ.get("OPENAI_BASE_URL", "https://openrouter.ai/api/v1"),
+        )
+    return _llm_client
 
 
 def load_risk_flags():
@@ -176,15 +182,18 @@ def explain_sku(sku_id: str):
     if payload is None:
         raise HTTPException(status_code=404, detail=f"{sku_id} not found")
 
-    client = get_anthropic_client()
+    client = get_llm_client()
     user_prompt = f"Explain this SKU's risk flag to a supply chain manager:\n\n{json.dumps(payload, indent=2)}"
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=MODEL_NAME,
+        messages=[
+            {"role": "system", "content": EXPLANATION_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.3,
         max_tokens=300,
-        system=EXPLANATION_SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_prompt}],
     )
-    return {"sku_id": sku_id, "explanation": response.content[0].text, "payload": payload}
+    return {"sku_id": sku_id, "explanation": response.choices[0].message.content, "payload": payload}
 
 
 @app.post("/api/ask")
@@ -194,12 +203,15 @@ def ask_question(request: AskRequest):
     context_df = risk_df[risk_df["sku_id"] == mentioned_sku] if mentioned_sku else risk_df
     context_json = context_df.to_json(orient="records", indent=2)
 
-    client = get_anthropic_client()
+    client = get_llm_client()
     user_prompt = f"Question: {request.question}\n\nSKU risk data:\n{context_json}"
-    response = client.messages.create(
+    response = client.chat.completions.create(
         model=MODEL_NAME,
+        messages=[
+            {"role": "system", "content": QA_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        temperature=0.3,
         max_tokens=400,
-        system=QA_SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_prompt}],
     )
-    return {"question": request.question, "answer": response.content[0].text, "matched_sku": mentioned_sku}
+    return {"question": request.question, "answer": response.choices[0].message.content, "matched_sku": mentioned_sku}

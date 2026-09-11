@@ -47,9 +47,10 @@ frontend/          React (Vite) app (deploy to Vercel)
 3. Render should auto-detect `render.yaml`. If not, set manually:
    - Build command: `pip install -r requirements.txt`
    - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. Add environment variable: `ANTHROPIC_API_KEY` = your key.
-5. Once deployed, note the URL, e.g. `https://supply-chain-risk-api.onrender.com`
-6. Test it: `curl https://YOUR-RENDER-URL/api/health` → should return `{"status":"ok"}`
+4. Add environment variable: `OPENAI_API_KEY` (or `API_KEY`) = your OpenAI-compatible key.
+5. Optionally set `OPENAI_BASE_URL` and `OPENAI_CHAT_MODEL` for OpenRouter or a compatible gateway.
+6. Once deployed, note the URL, e.g. `https://supply-chain-risk-api.onrender.com`
+7. Test it: `curl https://YOUR-RENDER-URL/api/health` → should return `{"status":"ok"}`
 
 ## Deploy the frontend to Vercel
 
@@ -69,7 +70,9 @@ Backend:
 ```bash
 cd backend
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=your-key
+export OPENAI_API_KEY=your-key
+export OPENAI_BASE_URL=https://openrouter.ai/api/v1
+export OPENAI_CHAT_MODEL=openai/gpt-oss-20b:free
 uvicorn app.main:app --reload
 # -> http://localhost:8000/api/health
 ```
