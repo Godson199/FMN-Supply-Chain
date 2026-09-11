@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://supply-chain-risk-api-g6hp.onrender.com";
 
 const RISK_COLORS = {
   STOCKOUT_RISK: "#c44e52",
@@ -48,7 +48,7 @@ function SkuDetail({ skuId, onClose }) {
       {loading && <p>Generating explanation...</p>}
       {error && (
         <p className="error">
-          Couldn't load explanation ({error}). Backend may not have ANTHROPIC_API_KEY configured.
+          Couldn't load explanation ({error}). Check the Render backend URL and API key configuration.
         </p>
       )}
       {explanation && <p className="explanation">{explanation}</p>}
@@ -112,7 +112,7 @@ function AskBox() {
       </form>
       {error && (
         <p className="error">
-          Couldn't get an answer ({error}). Backend may not have ANTHROPIC_API_KEY configured.
+          Couldn't get an answer ({error}). Check the Render backend URL and API key configuration.
         </p>
       )}
       {answer && <p className="answer">{answer}</p>}
