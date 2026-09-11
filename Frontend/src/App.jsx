@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "https://supply-chain-risk-api-g6hp.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const RISK_COLORS = {
   STOCKOUT_RISK: "#c44e52",
