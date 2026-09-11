@@ -1,0 +1,9 @@
+# CareerForge chatbot — additive dependencies
+# Merge these into your existing requirements.txt (fastapi, sqlalchemy,
+# psycopg2-binary, uvicorn, etc. should already be there from your current
+# backend deployment).
+
+openai>=1.40.0
+pgvector>=0.3.0
+tiktoken>=0.7.0
+pydantic>=2.0.0
