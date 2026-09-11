@@ -150,7 +150,7 @@ function App() {
             <span>Supply chain intelligence</span>
           </div>
         </div>
-        <div className="eyebrow"><span className="status-dot" />Operations dashboard</div>
+                <img className="brand-logo" src="/FMN.png" alt="Flour Mills of Nigeria" />
         <div className="header-row">
           <div>
             <h1>Supply Chain Stock Risk</h1>
@@ -164,6 +164,7 @@ function App() {
         <section className="summary-grid" aria-label="Risk summary">
           <div className="summary-card summary-card-alert">
             <span className="summary-label">Stockout risk</span>
+            setQuestion("");
             <strong>{stockoutCount}</strong>
             <span className="summary-note">needs attention</span>
           </div>
