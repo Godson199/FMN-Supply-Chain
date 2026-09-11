@@ -125,6 +125,9 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedSku, setSelectedSku] = useState(null);
+  const stockoutCount = rows.filter((row) => row.risk_flag === "STOCKOUT_RISK").length;
+  const overstockCount = rows.filter((row) => row.risk_flag === "OVERSTOCK").length;
+  const healthyCount = rows.filter((row) => row.risk_flag === "HEALTHY").length;
 
   useEffect(() => {
     fetch(`${API_BASE}/api/risk-flags`)
@@ -140,9 +143,42 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>Supply Chain Stock Risk</h1>
-        <p className="subtitle">Next-day demand forecast &amp; risk flags, all SKUs</p>
+        <div className="brand-bar">
+          <div className="brand-mark" aria-label="Flour Mills of Nigeria">FMN</div>
+          <div className="brand-copy">
+            <strong>Flour Mills of Nigeria</strong>
+            <span>Supply chain intelligence</span>
+          </div>
+        </div>
+        <div className="eyebrow"><span className="status-dot" />Operations dashboard</div>
+        <div className="header-row">
+          <div>
+            <h1>Supply Chain Stock Risk</h1>
+            <p className="subtitle">Next-day demand forecast and inventory signals across every SKU.</p>
+          </div>
+          <span className="updated-label">LIVE DATA <span>•</span> 28 SKUs</span>
+        </div>
       </header>
+
+      {!loading && !error && (
+        <section className="summary-grid" aria-label="Risk summary">
+          <div className="summary-card summary-card-alert">
+            <span className="summary-label">Stockout risk</span>
+            <strong>{stockoutCount}</strong>
+            <span className="summary-note">needs attention</span>
+          </div>
+          <div className="summary-card summary-card-overstock">
+            <span className="summary-label">Overstock</span>
+            <strong>{overstockCount}</strong>
+            <span className="summary-note">slow-moving inventory</span>
+          </div>
+          <div className="summary-card summary-card-healthy">
+            <span className="summary-label">Healthy</span>
+            <strong>{healthyCount}</strong>
+            <span className="summary-note">within target range</span>
+          </div>
+        </section>
+      )}
 
       {loading && <p>Loading risk data...</p>}
       {error && (
@@ -152,36 +188,47 @@ function App() {
       )}
 
       {!loading && !error && (
-        <table className="risk-table">
-          <thead>
-            <tr>
-              <th>SKU</th>
-              <th>Category</th>
-              <th>Stock</th>
-              <th>Lead time</th>
-              <th>Predicted demand</th>
-              <th>Cover ratio</th>
-              <th>Risk</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.sku_id}>
-                <td>{row.sku_id}</td>
-                <td>{row.category}</td>
-                <td>{row.closing_stock}</td>
-                <td>{row.lead_time_days}d</td>
-                <td>{row.predicted_next_day_demand?.toFixed(1)}/day</td>
-                <td>{row.cover_ratio}</td>
-                <td><RiskBadge flag={row.risk_flag} /></td>
-                <td>
-                  <button onClick={() => setSelectedSku(row.sku_id)}>Explain</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <section className="table-section">
+          <div className="section-heading">
+            <div>
+              <p className="section-kicker">Inventory overview</p>
+              <h2>Current SKU signals</h2>
+            </div>
+            <span className="section-meta">Sorted by cover ratio</span>
+          </div>
+          <div className="table-scroll">
+            <table className="risk-table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>Category</th>
+                  <th>Stock</th>
+                  <th>Lead time</th>
+                  <th>Predicted demand</th>
+                  <th>Cover ratio</th>
+                  <th>Risk</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.sku_id}>
+                    <td className="sku-cell">{row.sku_id}</td>
+                    <td>{row.category}</td>
+                    <td>{row.closing_stock}</td>
+                    <td>{row.lead_time_days}d</td>
+                    <td>{row.predicted_next_day_demand?.toFixed(1)}/day</td>
+                    <td className="cover-cell">{row.cover_ratio}</td>
+                    <td><RiskBadge flag={row.risk_flag} /></td>
+                    <td>
+                      <button className="explain-button" onClick={() => setSelectedSku(row.sku_id)}>Explain</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
 
       {selectedSku && <SkuDetail skuId={selectedSku} onClose={() => setSelectedSku(null)} />}
