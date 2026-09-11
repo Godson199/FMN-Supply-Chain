@@ -141,8 +141,7 @@ function AskBox() {
         </section>
       )}
       <button className="chat-launcher" onClick={() => setIsOpen((open) => !open)} aria-expanded={isOpen}>
-        <span className="chat-launcher-dot" />
-        {isOpen ? "Close assistant" : "Ask FMN assistant"}
+          {isOpen ? "CLOSE" : "ASK FMN"}
       </button>
     </div>
   );
