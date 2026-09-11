@@ -70,25 +70,30 @@ function SkuDetail({ skuId, onClose }) {
 
 function AskBox() {
   const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleAsk = async (e) => {
     e.preventDefault();
     if (!question.trim()) return;
+    const askedQuestion = question.trim();
     setLoading(true);
     setError(null);
-    setAnswer(null);
     try {
       const res = await fetch(`${API_BASE}/api/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question: askedQuestion }),
       });
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
       const data = await res.json();
-      setAnswer(data.answer);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { role: "user", content: askedQuestion },
+        { role: "assistant", content: data.answer },
+      ]);
       setQuestion("");
     } catch (err) {
       setError(err.message);
@@ -98,25 +103,47 @@ function AskBox() {
   };
 
   return (
-    <div className="ask-box">
-      <h3>Ask a question</h3>
-      <form onSubmit={handleAsk}>
-        <input
-          type="text"
-          placeholder="e.g. Which SKUs need urgent attention this week?"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Thinking..." : "Ask"}
-        </button>
-      </form>
-      {error && (
-        <p className="error">
-          Couldn't get an answer ({error}). Check the Render backend URL and API key configuration.
-        </p>
+    <div className={`chat-widget ${isOpen ? "chat-widget-open" : ""}`}>
+      {isOpen && (
+        <section className="chat-panel" aria-label="Supply chain assistant">
+          <div className="chat-header">
+            <div>
+              <span className="chat-kicker">FMN assistant</span>
+              <h3>Ask about your inventory</h3>
+            </div>
+            <button className="chat-close" onClick={() => setIsOpen(false)} aria-label="Close chat">Close</button>
+          </div>
+          <div className="chat-messages" aria-live="polite">
+            {messages.length === 0 && (
+              <p className="chat-empty">Ask about stockout risk, overstock, or any SKU in the current inventory.</p>
+            )}
+            {messages.map((message, index) => (
+              <div className={`chat-message chat-message-${message.role}`} key={`${message.role}-${index}`}>
+                <span className="message-label">{message.role === "user" ? "You" : "FMN assistant"}</span>
+                <p>{message.content}</p>
+              </div>
+            ))}
+            {loading && <div className="chat-thinking">Reviewing the inventory data...</div>}
+          </div>
+          <form className="chat-form" onSubmit={handleAsk}>
+            <input
+              type="text"
+              placeholder="Ask a supply chain question..."
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              aria-label="Ask a supply chain question"
+            />
+            <button type="submit" disabled={loading || !question.trim()} aria-label="Send question">
+              {loading ? "..." : "Send"}
+            </button>
+          </form>
+          {error && <p className="error">Couldn't get an answer ({error}).</p>}
+        </section>
       )}
-      {answer && <p className="answer">{answer}</p>}
+      <button className="chat-launcher" onClick={() => setIsOpen((open) => !open)} aria-expanded={isOpen}>
+        <span className="chat-launcher-dot" />
+        {isOpen ? "Close assistant" : "Ask FMN assistant"}
+      </button>
     </div>
   );
 }
